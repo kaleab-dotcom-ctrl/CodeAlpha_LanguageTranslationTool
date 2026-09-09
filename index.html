@@ -1,268 +1,188 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="warm">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LingoFlux - Modern Language Translation Tool</title>
-  <meta name="description" content="A fast, modern single-page language translation web app with auto-detect, text-to-speech synthesis, clipboard copy, and dark mode. No API key required.">
+  <title>LingoFlux — Instant Language Translation Tool</title>
+  <meta name="description" content="LingoFlux: Clean, fast, private, and client-side language translation with speech synthesis.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400;1,9..144,500&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Ambient background glow blobs -->
-  <div class="bg-blobs" aria-hidden="true">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-  </div>
+  <div class="app-wrapper">
+    <div class="main-container">
 
-  <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand">
-        <div class="logo-badge" aria-label="LingoFlux Logo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m5 8 6 6"/>
-            <path d="m4 14 6-6 2-3"/>
-            <path d="M2 5h12"/>
-            <path d="M7 2h1"/>
-            <path d="m22 22-5-10-5 10"/>
-            <path d="M14 18h6"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1>LingoFlux</h1>
-          <p>Instant multi-language translation with speech synthesis</p>
-        </div>
-      </div>
-
-      <div class="header-actions">
-        <button id="btnThemeToggle" class="btn-icon" aria-label="Toggle dark/light theme" title="Toggle theme">
-          <!-- Sun Icon (shown in dark mode) -->
-          <svg id="iconSun" style="display: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2"/>
-            <path d="M12 20v2"/>
-            <path d="m4.93 4.93 1.41 1.41"/>
-            <path d="m17.66 17.66 1.41 1.41"/>
-            <path d="M2 12h2"/>
-            <path d="M20 12h2"/>
-            <path d="m6.34 17.66-1.41 1.41"/>
-            <path d="m19.07 4.93-1.41 1.41"/>
-          </svg>
-          <!-- Moon Icon (shown in light mode) -->
-          <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-          </svg>
-        </button>
-      </div>
-    </header>
-
-    <!-- Alert / Error Notification Banner -->
-    <div id="alertBanner" class="alert-container" role="alert" aria-live="assertive">
-      <div class="alert alert-error">
-        <div class="alert-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-        </div>
-        <div class="alert-content" id="alertMessage">An error occurred during translation.</div>
-        <button id="btnAlertClose" class="alert-close" aria-label="Close error notice">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Main Translator Card -->
-    <main class="translator-card">
-      <!-- Language Selection Bar -->
-      <div class="lang-selector-bar">
-        <div class="lang-group">
-          <span class="lang-group-label">From:</span>
-          <div class="select-wrapper">
-            <select id="sourceLangSelect" class="custom-select" aria-label="Source Language">
-              <!-- Populated dynamically via js/languages.js -->
-            </select>
-            <div class="select-arrow" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
+      <!-- Header -->
+      <header class="app-header">
+        <div class="brand-group">
+          <div class="brand-title-row">
+            <div class="logo-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 8l6 6"/>
+                <path d="M4 14l6-6 2-3"/>
+                <path d="M2 5h12"/>
+                <path d="M7 2h1"/>
+                <path d="m22 22-5-10-5 10"/>
+                <path d="M14 18h6"/>
               </svg>
+            </div>
+            <h1 class="brand-name">LingoFlux</h1>
+            <span class="version-tag">v2.0</span>
+          </div>
+          <p class="brand-subtitle">Instant translation with speech synthesis</p>
+        </div>
+
+        <div class="header-right">
+          <!-- Supported API Badges -->
+          <div class="api-badges">
+            <span class="api-pill">LibreTranslate</span>
+            <span class="api-pill">Google Translate</span>
+            <span class="api-pill">MyMemory</span>
+          </div>
+
+          <!-- Theme Variant Selector -->
+          <div class="theme-picker" title="Switch Design Variant">
+            <button class="theme-btn active" data-theme-val="warm" title="Design 1: Warm Minimal">Warm</button>
+            <button class="theme-btn" data-theme-val="dark" title="Design 2: Dark Editorial">Dark</button>
+            <button class="theme-btn" data-theme-val="thermal" title="Design 3: Thermal Receipt">Receipt</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Alert / Notification Banner -->
+      <div id="alertBanner" class="alert-container" role="alert">
+        <div class="alert-message-box">
+          <span class="alert-bullet">!</span>
+          <span id="alertMessage" class="alert-text">Error during translation</span>
+          <button id="btnAlertClose" class="alert-dismiss" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <!-- Thermal Serrated Edge Top (Thermal Theme only) -->
+      <div class="serrated-edge serrated-top" aria-hidden="true">
+        <svg width="100%" height="12" preserveAspectRatio="none" viewBox="0 0 560 12">
+          <polygon points="0,0 5,12 10,0 15,12 20,0 25,12 30,0 35,12 40,0 45,12 50,0 55,12 60,0 65,12 70,0 75,12 80,0 85,12 90,0 95,12 100,0 105,12 110,0 115,12 120,0 125,12 130,0 135,12 140,0 145,12 150,0 155,12 160,0 165,12 170,0 175,12 180,0 185,12 190,0 195,12 200,0 205,12 210,0 215,12 220,0 225,12 230,0 235,12 240,0 245,12 250,0 255,12 260,0 265,12 270,0 275,12 280,0 285,12 290,0 295,12 300,0 305,12 310,0 315,12 320,0 325,12 330,0 335,12 340,0 345,12 350,0 355,12 360,0 365,12 370,0 375,12 380,0 385,12 390,0 395,12 400,0 405,12 410,0 415,12 420,0 425,12 430,0 435,12 440,0 445,12 450,0 455,12 460,0 465,12 470,0 475,12 480,0 485,12 490,0 495,12 500,0 505,12 510,0 515,12 520,0 525,12 530,0 535,12 540,0 545,12 550,0 555,12 560,0" fill="currentColor"/>
+        </svg>
+      </div>
+
+      <!-- Main Translation Panel -->
+      <main class="main-panel">
+        <!-- Language Bar -->
+        <div class="language-bar">
+          <div class="lang-col from-col">
+            <span class="lang-label">FROM</span>
+            <div class="select-container">
+              <select id="sourceLangSelect" class="lang-select" aria-label="From language"></select>
+              <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          <div class="swap-col">
+            <button id="btnSwapLang" class="btn-swap" aria-label="Swap languages" title="Swap languages">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 16V4m0 0L3 8m4-4 4 4"/>
+                <path d="M17 8v12m0 0 4-4m-4 4-4-4"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="lang-col to-col">
+            <span class="lang-label">TO</span>
+            <div class="select-container">
+              <select id="targetLangSelect" class="lang-select" aria-label="To language"></select>
+              <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
           </div>
         </div>
 
-        <button id="btnSwapLang" class="btn-swap" aria-label="Swap source and target languages" title="Swap languages">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m16 3 4 4-4 4"/>
-            <path d="M20 7H4"/>
-            <path d="m8 21-4-4 4-4"/>
-            <path d="M4 17h16"/>
-          </svg>
-        </button>
-
-        <div class="lang-group">
-          <span class="lang-group-label">To:</span>
-          <div class="select-wrapper">
-            <select id="targetLangSelect" class="custom-select" aria-label="Target Language">
-              <!-- Populated dynamically via js/languages.js -->
-            </select>
-            <div class="select-arrow" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Text Panels (Grid) -->
-      <div class="translation-grid">
-        <!-- Source Input Panel -->
-        <section class="panel source-panel" aria-label="Source Text Input Area">
-          <div class="textarea-wrapper">
+        <!-- Text Areas Grid -->
+        <div class="text-grid">
+          <!-- Source Column -->
+          <div class="text-col source-col">
             <textarea
               id="sourceText"
-              class="text-area"
-              placeholder="Enter text or phrase to translate here..."
-              rows="6"
+              class="trans-textarea"
+              placeholder="Enter text…"
               maxlength="5000"
               spellcheck="true"
-              aria-label="Source text"
+              aria-label="Source text input"
             ></textarea>
-          </div>
-
-          <div class="panel-footer">
-            <div class="tool-group">
-              <button id="btnSourceSpeak" class="tool-btn" aria-label="Listen to source text" title="Listen to text">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-                </svg>
-              </button>
-              <button id="btnClearSource" class="tool-btn" aria-label="Clear source text" title="Clear text">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-            <div class="panel-meta">
-              <span id="sourceCharCount">0 / 5000</span>
+            <div class="col-toolbar">
+              <button id="btnSourceSpeak" class="icon-tool-btn" aria-label="Listen to source text" title="Listen">🔊</button>
+              <button id="btnClearSource" class="icon-tool-btn" aria-label="Clear source text" title="Clear">✕</button>
+              <span id="sourceCharCount" class="char-count">0 / 5,000</span>
             </div>
           </div>
-        </section>
 
-        <!-- Target Output Panel -->
-        <section class="panel target-panel" aria-label="Translated Result Area">
-          <div class="textarea-wrapper">
-            <!-- Loading overlay -->
-            <div id="panelLoader" class="panel-loader" aria-hidden="true">
-              <div class="spinner"></div>
-              <span class="loader-text">Translating...</span>
+          <!-- Divider -->
+          <div class="grid-divider" aria-hidden="true"></div>
+
+          <!-- Target Column -->
+          <div class="text-col target-col">
+            <div class="output-wrapper">
+              <div id="panelLoader" class="output-loading" style="display: none;">
+                <span class="translating-text">Translating…</span>
+              </div>
+              <div id="outputContent" class="output-content">
+                <p id="targetPlaceholder" class="placeholder-text">Translation</p>
+                <p id="targetOutput" class="result-text" style="display: none;"></p>
+              </div>
             </div>
-
-            <textarea
-              id="targetText"
-              class="text-area target-area"
-              placeholder="Translation will appear here..."
-              rows="6"
-              readonly
-              aria-label="Translated text"
-            ></textarea>
-          </div>
-
-          <div class="panel-footer">
-            <div class="tool-group">
-              <button id="btnTargetSpeak" class="tool-btn" aria-label="Listen to translation" title="Listen to translation" disabled>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-                </svg>
+            <div class="col-toolbar">
+              <button id="btnTargetSpeak" class="icon-tool-btn" aria-label="Listen to translation" title="Listen" disabled>🔊</button>
+              <button id="btnCopyTarget" class="icon-tool-btn" aria-label="Copy translation" title="Copy" disabled>
+                <span id="copyIcon">⧉</span>
               </button>
-              <button id="btnCopyTarget" class="tool-btn" aria-label="Copy translation to clipboard" title="Copy to clipboard" disabled>
-                <svg id="iconCopy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-                </svg>
-                <svg id="iconCheck" style="display: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </button>
-            </div>
-            <div class="panel-meta">
-              <span id="detectedBadge" class="detected-badge">Detected: English</span>
-              <span id="engineBadge" class="engine-badge"></span>
-              <span id="targetCharCount">0 chars</span>
+              <div id="metaInfo" class="meta-info">
+                <span id="detectedBadge" class="detected-text" style="display: none;"></span>
+                <span id="engineBadge" class="engine-text" style="display: none;"></span>
+                <span id="targetCharCount" class="target-chars" style="display: none;"></span>
+              </div>
             </div>
           </div>
-        </section>
-      </div>
-
-      <!-- Action Bar -->
-      <div class="action-bar">
-        <div class="shortcut-tip">
-          <span>Tip: Press</span>
-          <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
-          <span>to translate immediately</span>
         </div>
 
-        <button id="btnTranslate" class="btn-translate">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m5 8 6 6"/>
-            <path d="m4 14 6-6 2-3"/>
-            <path d="M2 5h12"/>
-            <path d="M7 2h1"/>
-            <path d="m22 22-5-10-5 10"/>
-            <path d="M14 18h6"/>
-          </svg>
-          <span>Translate</span>
-        </button>
-      </div>
-    </main>
-
-    <!-- Recent Translation History -->
-    <section class="history-section" id="historySection" aria-label="Translation History">
-      <div class="history-header">
-        <div class="history-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 14 14"/>
-          </svg>
-          <span>Recent Translations</span>
+        <!-- Action Bar -->
+        <div class="action-bar">
+          <p class="shortcut-text">
+            <kbd>⌘ Enter</kbd> to translate
+          </p>
+          <button id="btnTranslate" class="btn-translate" disabled>
+            Translate
+          </button>
         </div>
-        <button id="btnClearHistory" class="btn-clear-history">Clear History</button>
-      </div>
-      <div id="historyList" class="history-list">
-        <!-- Injected via JavaScript -->
-        <div class="history-empty">No translation history yet. Translated phrases will be saved here for quick reference.</div>
-      </div>
-    </section>
+      </main>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <p>LingoFlux &copy; 2026 &bull; Free, fast, private, and client-side translation tool.</p>
-      <div class="footer-links">
-        <a href="https://libretranslate.com/" target="_blank" rel="noopener noreferrer">LibreTranslate</a>
-        <span>&bull;</span>
-        <a href="https://translate.google.com" target="_blank" rel="noopener noreferrer">Google Translate</a>
-        <span>&bull;</span>
-        <a href="https://mymemory.translated.net" target="_blank" rel="noopener noreferrer">MyMemory API</a>
+      <!-- Thermal Serrated Edge Bottom (Thermal Theme only) -->
+      <div class="serrated-edge serrated-bottom" aria-hidden="true">
+        <svg width="100%" height="12" preserveAspectRatio="none" viewBox="0 0 560 12">
+          <polygon points="0,12 5,0 10,12 15,0 20,12 25,0 30,12 35,0 40,12 45,0 50,12 55,0 60,12 65,0 70,12 75,0 80,12 85,0 90,12 95,0 100,12 105,0 110,12 115,0 120,12 125,0 130,12 135,0 140,12 145,0 150,12 155,0 160,12 165,0 170,12 175,0 180,12 185,0 190,12 195,0 200,12 205,0 210,12 215,0 220,12 225,0 230,12 235,0 240,12 245,0 250,12 255,0 260,12 265,0 270,12 275,0 280,12 285,0 290,12 295,0 300,12 305,0 310,12 315,0 320,12 325,0 330,12 335,0 340,12 345,0 350,12 355,0 360,12 365,0 370,12 375,0 380,12 385,0 390,12 395,0 400,12 405,0 410,12 415,0 420,12 425,0 430,12 435,0 440,12 445,0 450,12 455,0 460,12 465,0 470,12 475,0 480,12 485,0 490,12 495,0 500,12 505,0 510,12 515,0 520,12 525,0 530,12 535,0 540,12 545,0 550,12 555,0 560,12" fill="currentColor"/>
+        </svg>
       </div>
-    </footer>
+
+      <!-- Recent History -->
+      <section id="historySection" class="history-block" style="display: none;">
+        <div class="history-top">
+          <h2 class="history-heading">Recent</h2>
+          <button id="btnClearHistory" class="btn-clear-hist">Clear</button>
+        </div>
+        <div id="historyList" class="history-items"></div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <p>LingoFlux © 2026 · Free, fast, private, and client-side.</p>
+      </footer>
+
+    </div>
   </div>
 
-  <!-- Toast notification element -->
-  <div id="toastNotice" class="toast-notice" role="status" aria-live="polite">Text copied to clipboard</div>
+  <!-- Toast notification -->
+  <div id="toastNotice" class="toast-popup" role="status" aria-live="polite">Copied to clipboard</div>
 
-  <!-- Application Scripts -->
+  <!-- Scripts -->
   <script src="js/languages.js"></script>
   <script src="js/translator.js"></script>
   <script src="js/app.js"></script>
