@@ -1,125 +1,106 @@
 /**
- * LingoFlux — Application Controller (Warm Minimal UI + Theme Variants)
+ * LINGOFLUX — THERMAL RECEIPT APPLICATION CONTROLLER
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
+  const liveClock = document.getElementById('liveClock');
   const sourceLangSelect = document.getElementById('sourceLangSelect');
   const targetLangSelect = document.getElementById('targetLangSelect');
   const btnSwapLang = document.getElementById('btnSwapLang');
 
   const sourceText = document.getElementById('sourceText');
-  const targetOutput = document.getElementById('targetOutput');
-  const targetPlaceholder = document.getElementById('targetPlaceholder');
   const sourceCharCount = document.getElementById('sourceCharCount');
-  const targetCharCount = document.getElementById('targetCharCount');
-
-  const btnTranslate = document.getElementById('btnTranslate');
-  const btnClearSource = document.getElementById('btnClearSource');
   const btnSourceSpeak = document.getElementById('btnSourceSpeak');
+  const btnClearSource = document.getElementById('btnClearSource');
+
+  const outputHeader = document.getElementById('outputHeader');
+  const busyIndicator = document.getElementById('busyIndicator');
+  const outputContent = document.getElementById('outputContent');
+  const targetPlaceholder = document.getElementById('targetPlaceholder');
+  const targetOutput = document.getElementById('targetOutput');
+  const outputActions = document.getElementById('outputActions');
   const btnTargetSpeak = document.getElementById('btnTargetSpeak');
   const btnCopyTarget = document.getElementById('btnCopyTarget');
-  const copyIcon = document.getElementById('copyIcon');
 
-  const panelLoader = document.getElementById('panelLoader');
+  const btnTranslate = document.getElementById('btnTranslate');
   const alertBanner = document.getElementById('alertBanner');
   const alertMessage = document.getElementById('alertMessage');
   const btnAlertClose = document.getElementById('btnAlertClose');
 
-  const detectedBadge = document.getElementById('detectedBadge');
-  const engineBadge = document.getElementById('engineBadge');
-
-  const historySection = document.getElementById('historySection');
+  const historyBlock = document.getElementById('historyBlock');
   const historyList = document.getElementById('historyList');
   const btnClearHistory = document.getElementById('btnClearHistory');
   const toastNotice = document.getElementById('toastNotice');
 
-  const themeButtons = document.querySelectorAll('.theme-btn');
-
-  // Application State
-  let currentSpeakingButton = null;
+  // State
   let currentResult = '';
-  const HISTORY_STORAGE_KEY = 'lingoflux_history_v2';
-  const THEME_STORAGE_KEY = 'lingoflux_theme_variant_v2';
+  let isBusy = false;
+  const HISTORY_KEY = 'lingoflux_receipt_history_v1';
 
   /* ==========================================================================
-     1. Language Selectors Initialization
+     1. Live Receipt Clock
      ========================================================================== */
 
-  function populateLanguageSelects() {
+  function formatReceiptDate(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const year = d.getFullYear();
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    const seconds = pad(d.getSeconds());
+    return `${month}/${day}/${year}, ${hours}:${minutes}:${seconds}`;
+  }
+
+  function updateClock() {
+    if (liveClock) {
+      liveClock.textContent = formatReceiptDate(new Date());
+    }
+  }
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ==========================================================================
+     2. Language Selectors
+     ========================================================================== */
+
+  function populateLanguages() {
     sourceLangSelect.innerHTML = '';
     targetLangSelect.innerHTML = '';
 
     SUPPORTED_LANGUAGES.forEach(lang => {
-      // Source option
       const srcOpt = document.createElement('option');
       srcOpt.value = lang.code;
-      srcOpt.textContent = `${lang.name}`;
+      srcOpt.textContent = lang.name.toUpperCase();
       sourceLangSelect.appendChild(srcOpt);
 
-      // Target option (skip auto-detect)
       if (!lang.sourceOnly) {
         const tgtOpt = document.createElement('option');
         tgtOpt.value = lang.code;
-        tgtOpt.textContent = `${lang.name}`;
+        tgtOpt.textContent = lang.name.toUpperCase();
         targetLangSelect.appendChild(tgtOpt);
       }
     });
 
     sourceLangSelect.value = 'auto';
     targetLangSelect.value = 'es';
-    updateSwapButtonState();
+    updateSwapState();
   }
 
-  function updateSwapButtonState() {
+  function updateSwapState() {
     const isAuto = sourceLangSelect.value === 'auto';
     btnSwapLang.disabled = isAuto;
-    btnSwapLang.title = isAuto ? 'Select a specific source language to swap' : 'Swap languages';
   }
 
   /* ==========================================================================
-     2. Theme Management (Warm Minimal, Dark Editorial, Thermal Receipt)
+     3. Inputs & Button States
      ========================================================================== */
 
-  function initTheme() {
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'warm';
-    setTheme(savedTheme);
-  }
-
-  function setTheme(themeName) {
-    document.documentElement.setAttribute('data-theme', themeName);
-    localStorage.setItem(THEME_STORAGE_KEY, themeName);
-
-    themeButtons.forEach(btn => {
-      if (btn.getAttribute('data-theme-val') === themeName) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-
-    // Update button text for thermal theme if applicable
-    if (themeName === 'thermal') {
-      btnTranslate.textContent = '▶ PRINT TRANSLATION';
-    } else {
-      btnTranslate.textContent = 'Translate';
-    }
-  }
-
-  themeButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const selected = btn.getAttribute('data-theme-val');
-      setTheme(selected);
-    });
-  });
-
-  /* ==========================================================================
-     3. Inputs & Character Counters
-     ========================================================================== */
-
-  function updateTranslateButtonState() {
+  function updateTranslateButton() {
     const hasText = sourceText.value.trim().length > 0;
-    if (hasText) {
+    if (hasText && !isBusy) {
       btnTranslate.disabled = false;
       btnTranslate.classList.add('ready');
     } else {
@@ -130,187 +111,167 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sourceText.addEventListener('input', () => {
     const len = sourceText.value.length;
-    sourceCharCount.textContent = `${len.toLocaleString()} / 5,000`;
-    updateTranslateButtonState();
+    sourceCharCount.textContent = `${len} / 5000 CHARS`;
+    btnClearSource.style.display = len > 0 ? 'inline-block' : 'none';
+    updateTranslateButton();
     hideAlert();
   });
 
   btnClearSource.addEventListener('click', () => {
     sourceText.value = '';
-    currentResult = '';
-    targetOutput.textContent = '';
-    targetOutput.style.display = 'none';
-    targetPlaceholder.style.display = 'block';
-    
-    sourceCharCount.textContent = '0 / 5,000';
-    targetCharCount.style.display = 'none';
-    detectedBadge.style.display = 'none';
-    engineBadge.style.display = 'none';
-    
-    btnCopyTarget.disabled = true;
-    btnTargetSpeak.disabled = true;
-    updateTranslateButtonState();
+    sourceCharCount.textContent = '0 / 5000 CHARS';
+    btnClearSource.style.display = 'none';
+    resetOutput();
+    updateTranslateButton();
     hideAlert();
     sourceText.focus();
   });
+
+  function resetOutput() {
+    currentResult = '';
+    outputHeader.textContent = 'OUTPUT';
+    targetPlaceholder.style.display = 'block';
+    targetOutput.style.display = 'none';
+    targetOutput.textContent = '';
+    outputActions.style.display = 'none';
+  }
 
   /* ==========================================================================
      4. Language Swapping
      ========================================================================== */
 
   btnSwapLang.addEventListener('click', () => {
-    const currentSource = sourceLangSelect.value;
-    const currentTarget = targetLangSelect.value;
+    const currentFrom = sourceLangSelect.value;
+    const currentTo = targetLangSelect.value;
+    if (currentFrom === 'auto') return;
 
-    if (currentSource === 'auto') return;
+    sourceLangSelect.value = currentTo;
+    targetLangSelect.value = currentFrom;
 
-    sourceLangSelect.value = currentTarget;
-    targetLangSelect.value = currentSource;
-
-    // Swap text if translation exists
-    const srcVal = sourceText.value;
-    const tgtVal = currentResult;
-    if (tgtVal.trim()) {
-      sourceText.value = tgtVal;
-      setResultText(srcVal);
-      sourceCharCount.textContent = `${sourceText.value.length.toLocaleString()} / 5,000`;
+    if (currentResult.trim()) {
+      const prevSrc = sourceText.value;
+      sourceText.value = currentResult;
+      sourceCharCount.textContent = `${sourceText.value.length} / 5000 CHARS`;
+      setCompletedOutput(prevSrc);
     }
 
-    updateSwapButtonState();
-    updateTranslateButtonState();
+    updateSwapState();
+    updateTranslateButton();
   });
 
-  sourceLangSelect.addEventListener('change', updateSwapButtonState);
+  sourceLangSelect.addEventListener('change', updateSwapState);
 
   /* ==========================================================================
      5. Alerts & Toast Notifications
      ========================================================================== */
 
   function showAlert(msg) {
-    alertMessage.textContent = msg;
-    alertBanner.classList.add('active');
+    alertMessage.textContent = `[ ${msg.toUpperCase()} ]`;
+    alertBanner.style.display = 'flex';
   }
 
   function hideAlert() {
-    alertBanner.classList.remove('active');
+    alertBanner.style.display = 'none';
   }
 
   btnAlertClose.addEventListener('click', hideAlert);
 
-  let toastTimeout = null;
+  let toastTimer = null;
   function showToast(text) {
     toastNotice.textContent = text;
     toastNotice.classList.add('show');
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
       toastNotice.classList.remove('show');
-    }, 2000);
+    }, 1600);
   }
 
   /* ==========================================================================
-     6. Result Display & State Helper
+     6. Output Helpers
      ========================================================================== */
 
-  function setResultText(text, engine, detectedLang) {
-    currentResult = text || '';
+  function setCompletedOutput(translatedText, detectedLang, engine) {
+    currentResult = translatedText || '';
     if (currentResult) {
+      let headerStr = 'OUTPUT';
+      if (detectedLang) {
+        headerStr += ` · DETECTED: ${detectedLang.toUpperCase()}`;
+      }
+      if (engine) {
+        const engName = engine.toUpperCase().replace(/\s+/g, '-');
+        headerStr += ` · VIA ${engName}`;
+      }
+      outputHeader.textContent = headerStr;
+
       targetPlaceholder.style.display = 'none';
       targetOutput.textContent = currentResult;
       targetOutput.style.display = 'block';
-
-      btnCopyTarget.disabled = false;
-      btnTargetSpeak.disabled = false;
-
-      targetCharCount.textContent = `${currentResult.length} chars`;
-      targetCharCount.style.display = 'inline-block';
-
-      if (detectedLang) {
-        const langObj = getLanguageByCode(detectedLang);
-        const name = langObj ? langObj.name : detectedLang.toUpperCase();
-        detectedBadge.textContent = `Detected: ${name}`;
-        detectedBadge.style.display = 'inline-block';
-      } else {
-        detectedBadge.style.display = 'none';
-      }
-
-      if (engine) {
-        engineBadge.textContent = `· via ${engine}`;
-        engineBadge.style.display = 'inline-block';
-      } else {
-        engineBadge.style.display = 'none';
-      }
+      outputActions.style.display = 'flex';
     } else {
-      targetOutput.textContent = '';
-      targetOutput.style.display = 'none';
-      targetPlaceholder.style.display = 'block';
-      btnCopyTarget.disabled = true;
-      btnTargetSpeak.disabled = true;
-      targetCharCount.style.display = 'none';
-      detectedBadge.style.display = 'none';
-      engineBadge.style.display = 'none';
+      resetOutput();
     }
   }
 
   /* ==========================================================================
-     7. Translation Execution
+     7. Translation Print Handler
      ========================================================================== */
 
-  async function handleTranslate() {
+  async function handlePrint() {
     const text = sourceText.value.trim();
-    if (!text) {
-      showAlert('Please enter text to translate.');
-      sourceText.focus();
-      return;
-    }
+    if (!text || isBusy) return;
 
-    const sourceLang = sourceLangSelect.value;
-    const targetLang = targetLangSelect.value;
+    const fromLang = sourceLangSelect.value;
+    const toLang = targetLangSelect.value;
 
+    isBusy = true;
     hideAlert();
-    panelLoader.style.display = 'block';
+    updateTranslateButton();
+
+    btnTranslate.textContent = 'PRINTING...';
+    busyIndicator.style.display = 'block';
     targetPlaceholder.style.display = 'none';
     targetOutput.style.display = 'none';
-
-    btnTranslate.disabled = true;
-    btnTranslate.classList.remove('ready');
+    outputActions.style.display = 'none';
 
     try {
-      const res = await translator.translate(text, sourceLang, targetLang);
-      panelLoader.style.display = 'none';
-      setResultText(res.translatedText, res.engine, res.detectedSourceLang);
+      const res = await translator.translate(text, fromLang, toLang);
+      busyIndicator.style.display = 'none';
+      setCompletedOutput(res.translatedText, res.detectedSourceLang, res.engine);
 
-      // Save to history
+      // Save to receipt history
       saveToHistory({
         sourceText: text,
         resultText: res.translatedText,
-        sourceLang: sourceLang,
-        targetLang: targetLang,
+        fromCode: fromLang.toUpperCase(),
+        toCode: toLang.toUpperCase(),
         timestamp: Date.now()
       });
     } catch (err) {
-      panelLoader.style.display = 'none';
+      busyIndicator.style.display = 'none';
       if (!currentResult) {
         targetPlaceholder.style.display = 'block';
       }
-      showAlert(err.message || 'Translation failed. Please try again.');
+      showAlert(err.message || 'TRANSLATION FAILED');
       console.error(err);
     } finally {
-      updateTranslateButtonState();
+      isBusy = false;
+      btnTranslate.textContent = '▶ PRINT TRANSLATION';
+      updateTranslateButton();
     }
   }
 
-  btnTranslate.addEventListener('click', handleTranslate);
+  btnTranslate.addEventListener('click', handlePrint);
 
-  // Keyboard shortcut: Ctrl + Enter / Cmd + Enter
+  // Keyboard shortcut: ⌘ Enter / Ctrl + Enter
   window.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
-      handleTranslate();
+      handlePrint();
     }
   });
 
   /* ==========================================================================
-     8. Copy to Clipboard
+     8. Copy Action
      ========================================================================== */
 
   btnCopyTarget.addEventListener('click', async () => {
@@ -320,22 +281,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(currentResult);
       } else {
-        const temp = document.createElement('textarea');
-        temp.value = currentResult;
-        document.body.appendChild(temp);
-        temp.select();
+        const t = document.createElement('textarea');
+        t.value = currentResult;
+        document.body.appendChild(t);
+        t.select();
         document.execCommand('copy');
-        document.body.removeChild(temp);
+        document.body.removeChild(t);
       }
 
-      copyIcon.textContent = '✓';
-      showToast('Copied translation');
+      btnCopyTarget.textContent = '[ COPIED ]';
+      showToast('[ COPIED ]');
       setTimeout(() => {
-        copyIcon.textContent = '⧉';
+        btnCopyTarget.textContent = '[ COPY ]';
       }, 1600);
     } catch (err) {
-      showToast('Failed to copy');
-      console.error('Clipboard copy error:', err);
+      showToast('[ ERROR COPYING ]');
     }
   });
 
@@ -343,31 +303,14 @@ document.addEventListener('DOMContentLoaded', () => {
      9. Text-to-Speech (Web Speech API)
      ========================================================================== */
 
-  function stopSpeech() {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    if (currentSpeakingButton) {
-      currentSpeakingButton.classList.remove('speaking');
-      currentSpeakingButton = null;
-    }
-  }
-
-  function speakText(text, langCode, btn) {
+  function speak(text, langCode) {
     if (!('speechSynthesis' in window)) {
-      showAlert('Text-to-speech is not supported in your browser.');
+      showAlert('SPEECH NOT SUPPORTED');
       return;
     }
-
     if (!text.trim()) return;
 
-    if (currentSpeakingButton === btn && window.speechSynthesis.speaking) {
-      stopSpeech();
-      return;
-    }
-
-    stopSpeech();
-
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const langObj = getLanguageByCode(langCode);
 
@@ -386,19 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (match) utterance.voice = match;
     }
 
-    currentSpeakingButton = btn;
-    btn.classList.add('speaking');
-
-    utterance.onend = () => {
-      btn.classList.remove('speaking');
-      if (currentSpeakingButton === btn) currentSpeakingButton = null;
-    };
-
-    utterance.onerror = () => {
-      btn.classList.remove('speaking');
-      if (currentSpeakingButton === btn) currentSpeakingButton = null;
-    };
-
     window.speechSynthesis.speak(utterance);
   }
 
@@ -409,20 +339,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnSourceSpeak.addEventListener('click', () => {
-    speakText(sourceText.value, sourceLangSelect.value, btnSourceSpeak);
+    speak(sourceText.value, sourceLangSelect.value);
   });
 
   btnTargetSpeak.addEventListener('click', () => {
-    speakText(currentResult, targetLangSelect.value, btnTargetSpeak);
+    speak(currentResult, targetLangSelect.value);
   });
 
   /* ==========================================================================
-     10. Recent Translations History
+     10. Recent Translations (Receipt History)
      ========================================================================== */
 
   function getHistory() {
     try {
-      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      const raw = localStorage.getItem(HISTORY_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -432,66 +362,74 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveToHistory(item) {
     try {
       const list = getHistory();
-      if (list.length > 0 && list[0].sourceText === item.sourceText && list[0].targetLang === item.targetLang) {
+      if (list.length > 0 && list[0].sourceText === item.sourceText && list[0].toCode === item.toCode) {
         return;
       }
       list.unshift(item);
-      if (list.length > 8) list.pop();
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(list));
+      if (list.length > 9) list.pop();
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
       renderHistory();
     } catch (e) {
-      console.warn('Could not save history:', e);
+      console.warn('History save failed:', e);
     }
   }
 
   function renderHistory() {
-    const history = getHistory();
+    const list = getHistory();
     historyList.innerHTML = '';
 
-    if (history.length === 0) {
-      historySection.style.display = 'none';
+    if (list.length === 0) {
+      historyBlock.style.display = 'none';
       return;
     }
 
-    historySection.style.display = 'block';
+    historyBlock.style.display = 'block';
 
-    history.forEach(item => {
-      const row = document.createElement('button');
-      row.className = 'history-row';
-      row.type = 'button';
+    list.forEach((item, index) => {
+      const itemBtn = document.createElement('button');
+      itemBtn.type = 'button';
+      itemBtn.className = 'history-item';
 
-      const srcObj = getLanguageByCode(item.sourceLang);
-      const tgtObj = getLanguageByCode(item.targetLang);
-      const srcCode = (srcObj ? srcObj.code : item.sourceLang).toUpperCase().slice(0, 2);
-      const tgtCode = (tgtObj ? tgtObj.code : item.targetLang).toUpperCase().slice(0, 2);
+      const d = new Date(item.timestamp);
+      const dateStr = formatReceiptDate(d);
 
-      row.innerHTML = `
-        <span class="hist-src">${escapeHtml(item.sourceText)}</span>
-        <span class="hist-arrow">&rarr;</span>
-        <span class="hist-res">${escapeHtml(item.resultText)}</span>
-        <span class="hist-codes">${srcCode} &rarr; ${tgtCode}</span>
+      itemBtn.innerHTML = `
+        <div class="history-item-meta">${item.fromCode} → ${item.toCode} · ${dateStr}</div>
+        <div class="history-item-grid">
+          <span class="history-item-src">${escapeHtml(item.sourceText)}</span>
+          <span class="history-item-arrow">→</span>
+          <span class="history-item-res">${escapeHtml(item.resultText)}</span>
+        </div>
       `;
 
-      row.addEventListener('click', () => {
-        sourceLangSelect.value = item.sourceLang;
-        targetLangSelect.value = item.targetLang;
+      itemBtn.addEventListener('click', () => {
+        sourceLangSelect.value = item.fromCode.toLowerCase();
+        targetLangSelect.value = item.toCode.toLowerCase();
         sourceText.value = item.sourceText;
-        setResultText(item.resultText);
-        sourceCharCount.textContent = `${sourceText.value.length.toLocaleString()} / 5,000`;
-        updateSwapButtonState();
-        updateTranslateButtonState();
-        showToast('Restored translation');
+        sourceCharCount.textContent = `${item.sourceText.length} / 5000 CHARS`;
+        btnClearSource.style.display = 'inline-block';
+        setCompletedOutput(item.resultText);
+        updateSwapState();
+        updateTranslateButton();
+        showToast('[ RESTORED ]');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
 
-      historyList.appendChild(row);
+      historyList.appendChild(itemBtn);
+
+      if (index < list.length - 1) {
+        const sep = document.createElement('div');
+        sep.className = 'history-item-sep';
+        sep.textContent = '- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -';
+        historyList.appendChild(sep);
+      }
     });
   }
 
   btnClearHistory.addEventListener('click', () => {
-    localStorage.removeItem(HISTORY_STORAGE_KEY);
+    localStorage.removeItem(HISTORY_KEY);
     renderHistory();
-    showToast('History cleared');
+    showToast('[ HISTORY CLEARED ]');
   });
 
   function escapeHtml(str) {
@@ -501,11 +439,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ==========================================================================
-     Initial Setup
-     ========================================================================= */
-  populateLanguageSelects();
-  initTheme();
+     Initial Execution
+     ========================================================================== */
+  populateLanguages();
   renderHistory();
-  updateTranslateButtonState();
+  updateTranslateButton();
   sourceText.focus();
 });
